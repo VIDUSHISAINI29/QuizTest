@@ -32,7 +32,11 @@ import { check } from "prettier";
 const data = ref([]);
 const dataStatus = ref(false);
 const checkBoxArray = ref([]);
-const submitStatus = ref(false)
+const selectedOptionsArray = ref([]);
+const submitStatus = ref(false);
+const showAnswers = ref(false);
+const correctAnswers = ref(0);
+const incorrectAnswers = ref(0);
 
 async function handleFileUpload(event) {
    const file = await event.target.files[0];
@@ -54,21 +58,39 @@ async function handleFileUpload(event) {
          });
          data.value = allData.flat();
          checkBoxArray.value = Array(data.value.length).fill(null);
+         selectedOptionsArray.value = Array(data.value.length).fill(null);
          dataStatus.value = true
          console.log("data =", data.value);
-         console.log("length = ", data.value.length);
+         // console.log("length = ", data.value.length);
       };
       reader.readAsBinaryString(file);
    
    }
 }
 
-function checkAnswers(option){
-   for(let i = 0; i < data.value.length; i++){
-      console.log('checkbox array = ', checkBoxArray.value);
-   }
-   console.log('data inside checking = ',data)
+function storeAnswers(option, questionNumber){
+   selectedOptionsArray.value[questionNumber-1] = option
+   // console.log('checkbox array = ', selectedOptionsArray.value);
+
 }
+
+function checkAnswers(){
+   if(showAnswers.value === false){
+      for(let i = 0; i < data.value.length; i++){
+      if(data.value[i].CorrectAnswer === selectedOptionsArray.value[i]){
+         correctAnswers.value++;
+      }
+      else{
+         incorrectAnswers.value++;
+      }
+   }
+   }
+
+   console.log('correct answers = ', correctAnswers);
+   console.log('Incorrect answers = ', incorrectAnswers);
+   showAnswers.value = true;
+}
+
 
 // watch(checkBoxArray, () => {
 //    printBox();
@@ -99,7 +121,7 @@ function checkAnswers(option){
                      
                      :name="'question-' + index"
                      v-model="checkBoxArray[index]"
-                     @change="checkAnswers('1')"
+                     @change="storeAnswers(1, index+1)"
                      type="radio" />
                   <span class="tw-block">{{ col.Option1 }}</span>
                </div>
@@ -108,7 +130,7 @@ function checkAnswers(option){
                      class="tw-h-[14px] tw-cursor-pointer tw-w-[14px]"
                      :name="'question-' + index"
                      v-model="checkBoxArray[index]"
-                     @change="checkAnswers('2')"
+                     @change="storeAnswers(2, index+1)"
                      type="radio" />
                   <span class="tw-block">{{ col.Option2 }}</span>
                </div>
@@ -117,7 +139,7 @@ function checkAnswers(option){
                      class="tw-h-[14px] tw-cursor-pointer tw-w-[14px]"
                      :name="'question-' + index"
                      v-model="checkBoxArray[index]"
-                     @change="checkAnswers('3')"
+                     @change="storeAnswers(3, index+1)"
                      type="radio" />
                   <span class="tw-block">{{ col.Option3 }}</span>
                </div>
@@ -127,7 +149,7 @@ function checkAnswers(option){
                      @click="printBox"
                      :name="'question-' + index"
                      v-model="checkBoxArray[index]"
-                     @change="checkAnswers('4')"
+                     @change="storeAnswers(4, index+1)"
                      type="radio" />
                   <span class="tw-block">{{ col.Option4 }}</span>
                </div>
@@ -136,9 +158,13 @@ function checkAnswers(option){
          <span v-if="!submitStatus" @click="submitStatus = true"  class="tw-bg-blue-900 tw-cursor-pointer tw-text-white tw-p-2 tw-rounded-lg">Submit</span>
 
       </div>
-     <div class=" tw-flex tw-flex-col tw-gap-2">
+     <div v-if="submitStatus" class=" tw-flex tw-flex-col tw-gap-2">
       <span class="tw-bg-blue-900 tw-block tw-w-80 tw-cursor-pointer tw-text-white tw-p-2 tw-rounded-lg">Your response is successfully recorded.</span>
-      <span class="tw-bg-blue-900 tw-text-center tw-block tw-w-80 tw-cursor-pointer tw-text-white tw-p-2 tw-rounded-lg">Check Answers</span>
+      <span @click="checkAnswers" class="tw-bg-blue-900 tw-text-center tw-block tw-w-80 tw-cursor-pointer tw-text-white tw-p-2 tw-rounded-lg">Check Answers</span>
+     <div v-if="showAnswers" class="tw-flex tw-flex-col tw-gap-2">
+      <div><span class="tw-bg-blue-900 tw-block tw-w-80 tw-cursor-pointer tw-text-white tw-p-2 tw-rounded-lg">Correct Answers : {{ correctAnswers }}</span></div>
+      <div><span class="tw-bg-blue-900 tw-block tw-w-80 tw-cursor-pointer tw-text-white tw-p-2 tw-rounded-lg">InCorrect Answers : {{ incorrectAnswers }} </span></div>
+     </div>
      </div>
 
    </div>
