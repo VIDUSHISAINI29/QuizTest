@@ -27,10 +27,17 @@ console.log('data = ', data);
 <script setup>
 import * as XLSX from "xlsx";
 import { reactive, ref, watch } from "vue";
+import { check } from "prettier";
 
 const data = ref([]);
 const dataStatus = ref(false);
 const checkBoxArray = ref([]);
+const selectedOptionsArray = ref([]);
+const submitStatus = ref(false);
+const showAnswers = ref(false);
+const correctAnswers = ref(0);
+const incorrectAnswers = ref(0);
+const showQuestions = ref(true);
 
 async function handleFileUpload(event) {
    const file = await event.target.files[0];
@@ -51,57 +58,65 @@ async function handleFileUpload(event) {
             allData.push(sheetData);
          });
          data.value = allData.flat();
-         dataStatus.value = true
+         checkBoxArray.value = Array(data.value.length).fill(null);
+         selectedOptionsArray.value = Array(data.value.length).fill(null);
+         dataStatus.value = true;
          console.log("data =", data.value);
-         console.log("length = ", data.value.length);
+         // console.log("length = ", data.value.length);
       };
       reader.readAsBinaryString(file);
-   
    }
 }
 
-
-watch(data, () => {
-      console.log('hello data entered');
-      if(data.value.length > 1){
-      for(let i = 0; i < data.value.length; i++){
-       checkBoxArray.value.push({
-      one:'1',
-      two:'',
-      three:'',
-      four:''
-   })
-  
+function storeAnswers(option, questionNumber) {
+   selectedOptionsArray.value[questionNumber - 1] = option;
+   // console.log('checkbox array = ', selectedOptionsArray.value);
 }
-watch(checkBoxArray, () => {
-   for (let i = 0; i < data.value.length; i++) {
-      console.log("value1 = ", checkBoxArray.value[i]);
-      console.log("value2 = ", checkBoxArray.value[i]);
-      console.log("value3 = ", checkBoxArray.value[i]);
-      console.log("value4 = ", checkBoxArray.value[i]);
-   }
-})
-console.log(' real value = ', checkBoxArray.value[0].one);
-     }
-      
-   });
-   function printBox(){
+
+function checkAnswers() {
+   if (showAnswers.value === false) {
       for (let i = 0; i < data.value.length; i++) {
-      console.log("value1 = ", checkBoxArray.value[i]);
+         if (data.value[i].CorrectOption === selectedOptionsArray.value[i]) {
+            correctAnswers.value++;
+         } else {
+            incorrectAnswers.value++;
+         }
+      }
    }
-   }
+
+   console.log("correct answers = ", correctAnswers);
+   console.log("Incorrect answers = ", incorrectAnswers);
+   showAnswers.value = true;
+   submitStatus.value = false;
+}
+function changeSubmitStatus(){
+   submitStatus.value = true;
+   showQuestions.value = false;
+   console.log('submit statues',submitStatus);
+   
+}
+// watch(checkBoxArray, () => {
+//    printBox();
+// })
 </script>
 
 <template>
-   <div class="">
+   <div class="tw-flex tw-w-full tw-flex-col tw-items-center">
       <div
-         class="tw-flex tw-w-full tw-items-center tw-justify-center tw-bg-pink-500 tw-p-3">
+         class="tw-flex tw-w-full tw-items-center tw-justify-center tw-gap-2 tw-bg-blue-900 tw-p-3 tw-text-white">
+         <span>Upload File for questions :</span>
          <input type="file" @change="handleFileUpload" />
       </div>
       <div
+         v-if="dataStatus"
          class="tw-flex tw-w-full tw-flex-col tw-items-center tw-gap-3 tw-p-1">
-         <span v-if="dataStatus" class="tw-font-semibold tw-text-xl">Quiz is Ready</span>
-         <div v-for="(col, index) in data" class="tw-rounded-lg tw-shadow-md">
+         <span v-if="showQuestions" class="tw-text-xl tw-font-semibold">
+            Quiz is Ready
+         </span>
+         <div
+            v-if="showQuestions"
+            v-for="(col, index) in data"
+            class="tw-rounded-lg tw-shadow-md tw-transition tw-duration-500">
             <div
                class="tw-w-96 tw-overflow-hidden tw-rounded-lg tw-border-b-[6px] tw-border-r-[6px] tw-border-blue-900 tw-bg-blue-200 tw-p-2">
                <span class="tw-block">
@@ -109,36 +124,88 @@ console.log(' real value = ', checkBoxArray.value[0].one);
                </span>
                <div class="tw-flex tw-items-center tw-gap-1 tw-text-sm">
                   <input
-                     class="tw-h-[14px] tw-w-[14px]"
-                     v-model="checkBoxArray[index].one"
-                     
-                     type="checkbox" />
+                     class="tw-h-[14px] tw-w-[14px] tw-cursor-pointer"
+                     :name="'question-' + index"
+                     v-model="checkBoxArray[index]"
+                     @change="storeAnswers(1, index + 1)"
+                     type="radio" />
                   <span class="tw-block">{{ col.Option1 }}</span>
                </div>
                <div class="tw-flex tw-items-center tw-gap-1 tw-text-sm">
                   <input
-                     class="tw-h-[14px] tw-w-[14px]"
-                     v-model="checkBoxArray[index].two"
-                     type="checkbox" />
+                     class="tw-h-[14px] tw-w-[14px] tw-cursor-pointer"
+                     :name="'question-' + index"
+                     v-model="checkBoxArray[index]"
+                     @change="storeAnswers(2, index + 1)"
+                     type="radio" />
                   <span class="tw-block">{{ col.Option2 }}</span>
                </div>
                <div class="tw-flex tw-items-center tw-gap-1 tw-text-sm">
                   <input
-                     class="tw-h-[14px] tw-w-[14px]"
-                     v-model="checkBoxArray[index].three"
-                     type="checkbox" />
+                     class="tw-h-[14px] tw-w-[14px] tw-cursor-pointer"
+                     :name="'question-' + index"
+                     v-model="checkBoxArray[index]"
+                     @change="storeAnswers(3, index + 1)"
+                     type="radio" />
                   <span class="tw-block">{{ col.Option3 }}</span>
                </div>
                <div class="tw-flex tw-items-center tw-gap-1 tw-text-sm">
                   <input
-                     class="tw-h-[14px] tw-w-[14px]"
+                     class="tw-h-[14px] tw-w-[14px] tw-cursor-pointer"
                      @click="printBox"
-                     v-model="checkBoxArray[index].four"
-                     type="checkbox" />
+                     :name="'question-' + index"
+                     v-model="checkBoxArray[index]"
+                     @change="storeAnswers(4, index + 1)"
+                     type="radio" />
                   <span class="tw-block">{{ col.Option4 }}</span>
                </div>
             </div>
          </div>
+         <span
+            @click="changeSubmitStatus"
+            v-if="showQuestions"
+            class="tw-cursor-pointer tw-rounded-lg tw-bg-blue-900 tw-p-2 tw-text-white">
+            Submit
+         </span>
       </div>
+      <div v-if="submitStatus" class="tw-flex tw-items-center tw-flex-col tw-gap-2">
+         <span
+            class="tw-block tw-w-80 tw-cursor-pointer tw-rounded-lg tw-bg-blue-900 tw-p-2 tw-text-white">
+            Your response is successfully recorded.
+         </span>
+         <span
+            @click="checkAnswers"
+            class="tw-block tw-w-80 tw-cursor-pointer tw-rounded-lg tw-bg-blue-900 tw-p-2 tw-text-center tw-text-white">
+            Check Answers
+         </span>
+        
+      </div>
+      <div v-if="showAnswers" class="tw-flex tw-my-10 tw-items-center tw-flex-col tw-gap-2">
+            <div>
+               <span
+                  class="tw-block tw-w-80 tw-cursor-pointer tw-rounded-lg tw-bg-blue-900 tw-p-2 tw-text-white">
+                  Correct Answers : {{ correctAnswers }}
+               </span>
+            </div>
+            <div>
+               <span
+                  class="tw-block tw-w-80 tw-cursor-pointer tw-rounded-lg tw-bg-blue-900 tw-p-2 tw-text-white">
+                  InCorrect Answers : {{ incorrectAnswers }}
+               </span>
+            </div>
+
+            <div v-for="(col, index) in data" class="">
+               <div
+               class="tw-w-96 tw-overflow-hidden tw-rounded-lg tw-border-b-[6px] tw-border-r-[6px] tw-border-blue-900 tw-flex tw-flex-col tw-bg-blue-200 tw-p-2">
+               <span class="tw-block">
+                  Question{{ [index + 1] + ": " + " " + col.Questions }}
+               </span>
+               <span class="tw-block">
+                  Correct Answer : {{ col.CorrectAnswer }}
+               </span>
+            </div>
+            </div>
+          
+         </div>
    </div>
 </template>
